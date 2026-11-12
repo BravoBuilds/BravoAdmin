@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#07111d" />
+    <title>BravoAdmin | Key management</title>
+    <link rel="stylesheet" href="/admin.css" />
+    <script src="/admin.js" defer></script>
+  </head>
+  <body>
+    <main id="loginView" class="login-shell">
+      <section class="login-card" aria-labelledby="loginTitle">
+        <a class="brand" href="/" aria-label="BravoAdmin home">
+          <span class="brand-mark">B</span>
+          <span>BRAVOADMIN</span>
+        </a>
+        <p class="eyebrow">Restricted area</p>
+        <h1 id="loginTitle">Key management</h1>
+        <p class="muted">Sign in to manage access keys.</p>
+        <form id="loginForm" class="form-stack">
+          <label for="username">Username</label>
+          <input id="username" name="username" autocomplete="username" required />
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
+          <button class="button button-primary" type="submit">Sign in</button>
+          <p id="loginMessage" class="form-message" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+    </main>
+
+    <div id="adminView" class="app-shell hidden">
+      <aside class="sidebar">
+        <a class="brand" href="/" aria-label="BravoAdmin home">
+          <span class="brand-mark">B</span>
+          <span class="brand-label">BRAVOADMIN</span>
+        </a>
+        <p class="nav-caption">MANAGEMENT</p>
+        <a class="side-link active" href="#keys" aria-current="page"><span class="side-icon">⌘</span> Access keys</a>
+        <div class="sidebar-bottom">
+          <span class="secure-mark">●</span>
+          <span>Protected admin session</span>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div class="topbar-title">
+            <p class="eyebrow">BravoAdmin / Keys</p>
+            <h1>Access keys</h1>
+          </div>
+          <div class="topbar-actions">
+            <span class="session-label"><span class="status-dot"></span> Secure session</span>
+            <button id="logoutButton" class="button button-secondary" type="button">Sign out</button>
+          </div>
+        </header>
+
+        <section class="page-content" id="keys">
+          <div class="welcome-row">
+            <div>
+              <h2>Key overview</h2>
+              <p class="muted">Create, search, extend, and revoke keys from your connected key service.</p>
+            </div>
+            <button id="refreshButton" class="button button-secondary" type="button"><span aria-hidden="true">↻</span> Refresh</button>
+          </div>
+
+          <div class="stats-grid" aria-live="polite">
+            <article class="stat-card">
+              <span class="stat-label">Total keys</span>
+              <strong id="totalCount">—</strong>
+              <span class="stat-foot">From key service</span>
+            </article>
+            <article class="stat-card">
+              <span class="stat-label">Active</span>
+              <strong id="activeCount">—</strong>
+              <span class="stat-foot"><span class="status-dot"></span> Available keys</span>
+            </article>
+            <article class="stat-card">
+              <span class="stat-label">Expired</span>
+              <strong id="expiredCount">—</strong>
+              <span class="stat-foot">Past expiry date</span>
+            </article>
+            <article class="stat-card">
+              <span class="stat-label">Revoked</span>
+              <strong id="revokedCount">—</strong>
+              <span class="stat-foot">No longer valid</span>
+            </article>
+          </div>
+
+          <section class="panel create-panel" aria-labelledby="createTitle">
+            <div class="panel-heading">
+              <div>
+                <h2 id="createTitle">Create keys</h2>
+                <p class="muted">New keys are issued by the configured key service.</p>
+              </div>
+              <span class="panel-icon" aria-hidden="true">＋</span>
+            </div>
+            <form id="createForm" class="create-form">
+              <label>
+                Quantity
+                <input id="keyCount" type="number" min="1" max="500" value="1" required />
+              </label>
+              <label>
+                Duration
+                <select id="keyDuration">
+                  <option value="24h">24 hours</option>
+                  <option value="7d">7 days</option>
+                  <option value="30d" selected>30 days</option>
+                  <option value="90d">90 days</option>
+                  <option value="180d">180 days</option>
+                  <option value="365d">365 days</option>
+                </select>
+              </label>
+              <label class="checkbox-label">
+                <input id="multiAccount" type="checkbox" />
+                <span>Allow multiple accounts</span>
+              </label>
+              <button id="createButton" class="button button-primary" type="submit">Create keys</button>
+            </form>
+            <p id="createMessage" class="inline-message" role="status" aria-live="polite"></p>
+          </section>
+
+          <section class="panel keys-panel" aria-labelledby="keysTitle">
+            <div class="panel-heading keys-heading">
+              <div>
+                <h2 id="keysTitle">All keys</h2>
+                <p id="resultCount" class="muted">Loading keys…</p>
+              </div>
+              <div class="table-tools">
+                <label class="search-box">
+                  <span class="visually-hidden">Search keys</span>
+                  <span aria-hidden="true">⌕</span>
+                  <input id="searchInput" type="search" placeholder="Search keys…" autocomplete="off" />
+                </label>
+                <label>
+                  <span class="visually-hidden">Filter by status</span>
+                  <select id="statusFilter" class="filter-select">
+                    <option value="all">All statuses</option>
+                    <option value="active">Active</option>
+                    <option value="expired">Expired</option>
+                    <option value="revoked">Revoked</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Key</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Expires</th>
+                    <th scope="col">Accounts</th>
+                    <th scope="col"><span class="visually-hidden">Actions</span></th>
+                  </tr>
+                </thead>
+                <tbody id="keyRows">
+                  <tr><td class="empty-state" colspan="5">Loading keys…</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p id="keysError" class="error-banner hidden" role="alert"></p>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="expiryDialog" class="expiry-dialog">
+      <form id="expiryForm" method="dialog">
+        <p class="eyebrow">Update access</p>
+        <h2>Change key expiry</h2>
+        <p id="expiryKeyLabel" class="muted"></p>
+        <label for="expiryDuration">Extend by</label>
+        <select id="expiryDuration">
+          <option value="24h">24 hours</option>
+          <option value="7d">7 days</option>
+          <option value="30d" selected>30 days</option>
+          <option value="90d">90 days</option>
+          <option value="180d">180 days</option>
+          <option value="365d">365 days</option>
+        </select>
+        <div class="dialog-actions">
+          <button id="cancelExpiry" class="button button-secondary" type="button">Cancel</button>
+          <button class="button button-primary" type="submit">Update expiry</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+  </body>
+</html>

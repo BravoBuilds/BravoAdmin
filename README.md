@@ -1,65 +1,31 @@
 # BravoAdmin
 
-BravoAdmin is a standalone Roblox administration interface. It uses the dark navy, blue, and mint visual direction of the supplied website files, rebuilt as a responsive Roblox GUI. It does not contain BravoHack, ESP, aimbot, or other cheat features.
+BravoAdmin is a web-based admin page for managing access keys, based on the dark navy and blue design in the supplied archive. It includes a protected sign-in, a key list with search/filtering, key creation, expiry updates, and revocation.
 
-## Important: installation and security
+## Run locally
 
-Roblox does not support `loadstring(game:HttpGet(...))()` as a normal in-experience client loader. That pattern depends on an external script executor; it cannot securely install server scripts or grant permissions. BravoAdmin deliberately does not provide an executor loader. A client-only script must never be treated as an authority for moderation.
+Requirements: Node.js 18 or newer.
 
-Install both scripts in Roblox Studio:
+1. Copy `.env.example` to `.env`.
+2. Set `SITE_ADMIN_USER`, `SITE_ADMIN_PASSWORD` (at least 14 characters), `ADMIN_API_TOKEN`, and `WORKER_URL` to your own values.
+3. Run `node server.js`.
+4. Open `http://127.0.0.1:4173`.
 
-1. Copy `Server/BravoAdminServer.server.lua` into **ServerScriptService** as a normal **Script**.
-2. Copy `Main.lua` into **StarterPlayer > StarterPlayerScripts** as a **LocalScript**.
-3. In `BravoAdminServer.server.lua`, add trusted Roblox account IDs to `OwnerUserIds` and/or `UserRoles`. Use numeric user IDs, not usernames. The experience creator automatically has the Owner role when the experience is owned by an individual account.
-4. Publish the experience and enable **Game Settings > Security > Enable Studio Access to API Services** when testing DataStore bans in Studio. In a live server, DataStore access is required for ban and unban actions.
-5. Test first in a private test experience. Keep the server script and role list under control of trusted developers.
+The admin session is held in an HttpOnly, SameSite cookie. The worker token remains server-side and is never sent to the browser. The Node server proxies key operations to `WORKER_URL` at `/api/admin/keys`; it does not store or invent keys itself.
 
-The server creates the `ReplicatedStorage.BravoAdminRemotes` remotes itself. It authorizes every snapshot and action on the server, validates arguments, and rate-limits requests. Editing or invoking the client interface does not grant a role.
+## Key actions
 
-## Admin roles
+- List keys from the configured key API.
+- Create 1–500 keys with a supported duration and optional multi-account use.
+- Search and filter the returned key records.
+- Copy a key value, update its expiry, or revoke it.
 
-Configure these in the server script:
+The configured worker must support `GET`, `POST`, `PATCH`, and `DELETE` on `/api/admin/keys` with the expected bearer token. The UI displays an explicit error if the worker is unavailable or returns an unrecognized key-list shape.
 
-| Role | Permissions |
-| --- | --- |
-| Owner | View dashboard, kick, ban, unban, view logs, change server settings |
-| Admin | View dashboard, kick, ban, unban, view logs |
-| Moderator | View dashboard, kick, view logs |
+## Production
 
-Example configuration:
+Set `NODE_ENV=production` and `SITE_PUBLIC_HOSTNAMES` to the exact public hostname(s). Keep the Node server behind an HTTPS reverse proxy. Use unique secrets, do not commit `.env`, and restrict access to the server and key API credentials. Login sessions are in memory and will expire when the process restarts.
 
-```lua
-OwnerUserIds = { 123456789 },
-UserRoles = {
-    [987654321] = "Admin",
-    [456789123] = "Moderator",
-},
-```
+## Validation
 
-The experience creator receives Owner automatically for user-owned experiences. For group-owned experiences, add trusted users explicitly. Roles are server configuration, not editable by clients.
-Moderators and administrators cannot kick or ban themselves or a peer/higher role; an administrator may moderate lower roles.
-
-## Interface and commands
-
-- **Dashboard:** live player count, server uptime, place/job IDs, recent actions.
-- **Players:** searchable online-player list; kick; ban or unban by Roblox user ID.
-- **Commands:** `!help`, `!server`, `!kick <player> [reason]`, `!ban <userId> [reason]`, `!unban <userId>`.
-- **Settings:** owner-only switch for moderation notices (resets when the server restarts) and role permission reference.
-- **Logs:** latest 100 moderation/settings actions for the current server session.
-
-Ban records are stored in the `BravoAdminBans_v1` DataStore and survive server restarts. If the ban store cannot be checked when a player joins, the server denies entry until the ban status can be verified; this is intentionally fail-closed. Action logs and the broadcast-notice setting are server-session-only.
-
-To close the interface, use the **×** button. Starting the LocalScript again first unloads its prior interface and event connections.
-
-## Source / loadstring
-
-`Main.lua` is the client entry point, but it must run as a Roblox `LocalScript`; the server script must be installed separately in `ServerScriptService`. A raw GitHub URL or client loadstring cannot install or secure the server component. Do not use a client executor to run it.
-
-## Validation status
-
-The project is source code intended to be copied into Roblox Studio. No live Roblox place, DataStore, or multiplayer server was available in this repository environment.
-
-- Checked against the supplied archive’s admin page and theme for relevant copy/style direction.
-- Verified the design and action paths are split between client UI and server permission checks by inspection.
-- Both Lua files passed syntax compilation with the official Luau compiler.
-- Multiplayer permission tests, DataStore ban/unban tests, and device/resolution checks still need to be run in Roblox Studio.
+Run `node --check server.js`, `node --check public/admin.js`, and `node --test`. The tests use a mocked worker to verify session protection, server-only token forwarding, request validation, and origin checks. A real key list/create/update/revoke operation requires the configured worker endpoint and credentials.
